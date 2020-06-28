@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">dbzh</string>
+    <string name="str_login">欢迎登录</string>
+    <string name="str_input_account">请输入账号</string>
+    <string name="str_input_pass">请输入密码</string>
+    <string name="str_login_sub">登录</string>
+    <string name="rtc_permisson_error_tip">获取权限失败</string>
+</resources>
