@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
             boolean onOpen = intent.getBooleanExtra("onOpen", false);
             if (onOpen) {
+
                 if (client != null && client.isOpen()) {
                     JoinBean jsonBean = new JoinBean();
                     jsonBean.setType("join");
@@ -142,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                     data.setUserinfo(userInfo);
                     jsonBean.setData(data);
                     String json = new Gson().toJson(jsonBean);
-                    Log.e("Socaaaaaaaaaaaaaaaaa", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                    Log.e("Socaaaaaaaaaaaaaaaaa", "AAAAAAA"+mUser_id);
 
                     jWebSClientService.sendMsg(json);
                 } else {
@@ -188,6 +189,9 @@ public class MainActivity extends AppCompatActivity {
 
         OnlineBean onlineBean = new Gson().fromJson(message, OnlineBean.class);
 
+        String type = onlineBean.getType();
+        Log.e("ListAAAAAAAAAA", "TypeASD" + type);
+
         if (onlineBean.getType().equals("online_users")) {
             mUserList = onlineBean.getData().getUserList();
             Log.e("ListAAAAAAAAAA", "List" + mUserList.size());
@@ -198,7 +202,41 @@ public class MainActivity extends AppCompatActivity {
         } else if (onlineBean.getType().equals("join")) {
             OnlineBean.Data.UserInfo userinfo = onlineBean.getData().getUserinfo();
             String user_id = userinfo.getUser_id();
-            Log.e("ListAAAAAAAAAA", "join" + user_id);
+            String username = userinfo.getUsername();
+            int power = userinfo.getPower();
+            double lat = userinfo.getLat();
+            double lng = userinfo.getLng();
+            String role = userinfo.getRole();
+            String flv_url = userinfo.getFlv_url();
+
+            Log.e("ListAAAAAAAAAA", "  joinjoin  " + user_id);
+            OnlineBean.Data.UserList userList = new OnlineBean.Data.UserList();
+            userList.setUser_id(user_id);
+            userList.setUsername(username);
+            userList.setPower(power);
+            userList.setLat(lat);
+            userList.setLng(lng);
+            userList.setRole(role);
+            userList.setFlv_url(flv_url);
+
+            if (mUserList.size()==0){
+                mUserList.add(userList);
+            }else {
+                for (int i = 0; i < mUserList.size(); i++) {
+                    Log.e("ListAAAAAAAAAA", "  joinjoin   joinjoin  " + mUserList.get(i).getUser_id());
+                    if (mUserList.get(i).getUser_id() != null) {
+                        if (!mUserList.get(i).getUser_id().equals(user_id)) {
+                            mUserList.add(userList);
+                        }
+                    }
+//
+                }
+            }
+
+
+
+            mAdapter.setNewData(mUserList);
+
         } else if (onlineBean.getType().equals("position")) {
             String user_id = onlineBean.getData().getUser_id();
             String lat = onlineBean.getData().getPosition().getLat();
@@ -206,13 +244,12 @@ public class MainActivity extends AppCompatActivity {
         } else if (onlineBean.getType().equals("leave")) {
             String user_id = onlineBean.getData().getUser_id();
 
-
             for (int i = 0; i < mUserList.size(); i++) {
                 if (mUserList.get(i).getUser_id().equals(user_id)) {
                     mUserList.remove(i);
                 }
             }
-            Log.e("ListAAAAAAAAAA", "leave" + user_id+mUserList.size());
+            Log.e("ListAAAAAAAAAA", "leave" + user_id + mUserList.size());
             mAdapter.setNewData(mUserList);
 
         }
@@ -226,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         BarUtils.setStatusBarColor(this, Color.TRANSPARENT);
         BarUtils.setStatusBarLightMode(this, true);
+        getVoiceToken();
 
         intViewId();
         //在activity执行onCreate时执行mMapView.onCreate(savedInstanceState)，创建地图
@@ -249,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
 //        thread.start();
         ////// Socket
 
-        getVoiceToken();
 
     }
 
@@ -492,7 +529,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_PERMISSION_CODE) {
             for (int ret : grantResults) {
@@ -513,6 +551,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，销毁地图
         mMvMain.onDestroy();
+
+        unbindService(serviceConnection);
+
+        unregisterReceiver(chatMessageReceiver);
     }
 
     @Override
