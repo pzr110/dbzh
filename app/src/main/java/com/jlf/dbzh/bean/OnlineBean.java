@@ -180,6 +180,16 @@ public class OnlineBean {
             private String role;
             private String flv_url;
 
+            private boolean isSelect;
+
+            public boolean isSelect() {
+                return isSelect;
+            }
+
+            public void setSelect(boolean select) {
+                isSelect = select;
+            }
+
             public void setUser_id(String user_id) {
                 this.user_id = user_id;
             }

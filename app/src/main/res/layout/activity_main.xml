@@ -114,6 +114,7 @@
             android:layout_height="wrap_content" />
 
         <TextView
+            android:id="@+id/tv_call_all"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -145,6 +146,7 @@
             android:background="@drawable/shape_black_circle">
 
             <ImageView
+                android:id="@+id/iv_phone_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"

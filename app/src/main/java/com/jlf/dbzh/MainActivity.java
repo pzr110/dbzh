@@ -15,7 +15,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
@@ -31,26 +30,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amap.api.maps.AMap;
-import com.amap.api.maps.AMapOptions;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.MapView;
-import com.amap.api.maps.model.BitmapDescriptor;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
-import com.amap.api.maps.model.CameraPosition;
 import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.BarUtils;
-import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.gson.Gson;
+import com.jlf.dbzh.adapter.CallAdapter;
 import com.jlf.dbzh.adapter.SoliderAdapter;
 import com.jlf.dbzh.bean.JoinBean;
 import com.jlf.dbzh.bean.OnlineBean;
-import com.jlf.dbzh.bean.SoliderBean;
 import com.jlf.dbzh.bean.TokenBean;
 import com.jlf.dbzh.im.JWebSocketClient;
 import com.jlf.dbzh.im.JWebSocketClientService;
@@ -58,9 +52,7 @@ import com.jlf.dbzh.im.Util;
 import com.jlf.dbzh.model.ITRTCAudioCall;
 import com.jlf.dbzh.model.TRTCAudioCallImpl;
 import com.jlf.dbzh.model.TRTCAudioCallListener;
-import com.jlf.dbzh.ui.BaseActivity;
 import com.jlf.dbzh.ui.NewActivity;
-import com.jlf.dbzh.utils.L;
 import com.jlf.dbzh.utils.net.Api;
 import com.jlf.dbzh.utils.net.BaseSubscriber;
 
@@ -88,10 +80,16 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout mLlBottom;
     private ImageView mTvDown;
     private ImageView mIvPhone;
+    private TextView mTvCallAll;
+
+
+    private boolean isEdit = false;
 
 
     private List<OnlineBean.Data.UserList> mLists;
+    private List<OnlineBean.Data.UserList> mCallLists;
     private SoliderAdapter mAdapter;
+    private CallAdapter mCallAdapter;
 
     private String mUser_id;
     private String mAppId;
@@ -210,9 +208,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (onlineBean.getType().equals("online_users")) {
             mUserList = onlineBean.getData().getUserList();
-            Log.e("ListAAAAAAAAAA", "List" + mUserList.size());
+
+            for (int i = 0; i < mUserList.size(); i++) {
+                mUserList.get(i).setSelect(false);
+            }
 
             mAdapter.addData(mUserList);
+
+            mCallAdapter.addData(mUserList);
 //            getData();
 
         } else if (onlineBean.getType().equals("join")) {
@@ -251,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             mAdapter.setNewData(mUserList);
+            mCallAdapter.setNewData(mUserList);
 
         } else if (onlineBean.getType().equals("position")) {
             String user_id = onlineBean.getData().getUser_id();
@@ -266,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
             }
             Log.e("ListAAAAAAAAAA", "leave" + user_id + mUserList.size());
             mAdapter.setNewData(mUserList);
+            mCallAdapter.setNewData(mUserList);
 
         }
 
@@ -278,6 +283,9 @@ public class MainActivity extends AppCompatActivity {
     private int mCallType;
 
     private boolean checkOff = true;
+
+    private ImageView mIvPhoneAll;
+
 
     /**
      * 拨号的回调
@@ -374,6 +382,9 @@ public class MainActivity extends AppCompatActivity {
 
     /////////// 语音
 
+    private boolean isCall = false;
+    private ImageView mIvSelect;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -392,6 +403,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         initRecycler();
+        initRecyclerAll();
 
 
         //////Socket
@@ -403,7 +415,6 @@ public class MainActivity extends AppCompatActivity {
         //注册广播
         doRegisterReceiver();
 //        thread.start();
-        ////// Socket
 
 
         initLister();
@@ -449,6 +460,35 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        mCallAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+
+                if (!isCall) {
+                    boolean select = mCallAdapter.getData().get(position).isSelect();
+                    mIvSelect = view.findViewById(R.id.iv_select);
+                    ToastUtils.showShort("点击" + select);
+
+                    if (!select) {
+                        mIvSelect.setImageResource(R.mipmap.ic_select);
+                        mCallAdapter.getData().get(position).setSelect(true);
+                    } else {
+                        mIvSelect.setImageResource(R.drawable.shape_unselect_circle);
+                        mCallAdapter.getData().get(position).setSelect(false);
+                    }
+                } else {
+                    ToastUtils.showShort("请先结束当前通话");
+                }
+
+
+//                isEdit = !isEdit;
+//                mCallAdapter.changeSelectImage(isEdit);
+
+//                ToastUtils.showShort(mCallAdapter.getData().get(position).isSelect() + "");
+//
+            }
+        });
     }
 
     /**
@@ -490,6 +530,18 @@ public class MainActivity extends AppCompatActivity {
         View emptyView = getLayoutInflater().inflate(R.layout.item_empty, null);
         mAdapter.setEmptyView(emptyView);
         mRecyclerSoldier.setAdapter(mAdapter);
+    }
+
+    private void initRecyclerAll() {
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mRecyclerCall.setLayoutManager(layoutManager);
+//        mRecyclerCall.setLayoutManager(layoutManager);
+        mCallLists = new ArrayList<>();
+        mCallAdapter = new CallAdapter(mCallLists);
+
+        View emptyView = getLayoutInflater().inflate(R.layout.item_empty, null);
+        mCallAdapter.setEmptyView(emptyView);
+        mRecyclerCall.setAdapter(mCallAdapter);
     }
 
     private void initMap() {
@@ -600,11 +652,38 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        mIvPhoneAll = findViewById(R.id.iv_phone_all);
+
+
         findViewById(R.id.rl_call_all).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                ToastUtils.showLong("长按");
-                ActivityUtils.startActivity(NewActivity.class);
+//                ToastUtils.showLong("长按");
+
+                List<OnlineBean.Data.UserList> data = mCallAdapter.getData();
+
+                if (data.size() > 0) {
+                    List<String> callList = new ArrayList();
+                    for (int i = 0; i < data.size(); i++) {
+                        String user_id = data.get(i).getUser_id();
+                        callList.add(user_id);
+                    }
+
+                    if (!isCall) {
+                        sCall.groupCall(callList, "");
+                        isCall = true;
+                        mIvPhoneAll.setImageResource(R.mipmap.ic_hang_up);
+                    } else {
+                        sCall.hangup();
+                        isCall = false;
+                        mIvPhoneAll.setImageResource(R.mipmap.img_call_all);
+                    }
+
+
+                } else {
+                    ToastUtils.showShort("暂无设备在线");
+                }
+
                 return true;
             }
         });
@@ -653,7 +732,51 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mTvCallAll = findViewById(R.id.tv_call_all);
+        mTvCallAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                callAll();
+
+            }
+
+            private void callAll() {
+                List<OnlineBean.Data.UserList> data = mCallAdapter.getData();
+                List<OnlineBean.Data.UserList> newList = new ArrayList<>();
+                for (int i = 0; i < data.size(); i++) {
+                    if (data.get(i).isSelect()) {
+                        newList.add(data.get(i));
+                    }
+                }
+
+                if (newList.size() > 0) {
+                    List<String> callList = new ArrayList();
+                    for (int i = 0; i < newList.size(); i++) {
+                        String user_id = newList.get(i).getUser_id();
+                        callList.add(user_id);
+                    }
+
+                    if (!isCall) {
+                        sCall.groupCall(callList, "");
+                        isCall = true;
+                        mTvCallAll.setText("结束通话");
+                        mTvCallAll.setBackgroundResource(R.drawable.shape_red_2);
+                    } else {
+                        sCall.hangup();
+                        isCall = false;
+                        mTvCallAll.setText("立即进入");
+                        mTvCallAll.setBackgroundResource(R.drawable.shape_green_2);
+                    }
+
+
+                } else {
+                    ToastUtils.showShort("暂无设备在线");
+                }
+
+
+            }
+        });
     }
 
     private void getVoiceToken() {
