@@ -14,16 +14,16 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // 设置支持的SO库架构
-            abiFilters 'armeabi' , 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86","x86_64"
         }
     }
 
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
-    }
+//    sourceSets {
+//        main {
+//            jniLibs.srcDirs = ['libs']
+//        }
+//    }
 
     buildTypes {
         release {
@@ -38,25 +38,25 @@ android {
     }
 
     packagingOptions {
-        pickFirst 'lib/arm64-v8a/libijkplayer.so'
-        pickFirst 'lib/armeabi/libijkplayer.so'
-        pickFirst 'lib/armeabi-v7a/libijkplayer.so'
-        pickFirst 'lib/x86/libijkplayer.so'
-        pickFirst 'lib/arm64-v8a/libijkffmpeg.so'
-        pickFirst 'lib/armeabi/libijkffmpeg.so'
-        pickFirst 'lib/armeabi-v7a/libijkffmpeg.so'
-        pickFirst 'lib/x86/libijkffmpeg.so'
-        pickFirst 'lib/arm64-v8a/libijksdl.so'
-        pickFirst 'lib/armeabi/libijksdl.so'
-        pickFirst 'lib/armeabi-v7a/libijksdl.so'
-        pickFirst 'lib/x86/libijksdl.so'
-
-        pickFirst '**/libc++_shared.so'
-        doNotStrip "*/armeabi/libYTCommon.so"
-        doNotStrip "*/armeabi-v7a/libYTCommon.so"
-        doNotStrip "*/x86/libYTCommon.so"
-        doNotStrip "*/arm64-v8a/libYTCommon.so"
-
+//        pickFirst 'lib/arm64-v8a/libijkplayer.so'
+//        pickFirst 'lib/armeabi/libijkplayer.so'
+//        pickFirst 'lib/armeabi-v7a/libijkplayer.so'
+//        pickFirst 'lib/x86/libijkplayer.so'
+//        pickFirst 'lib/arm64-v8a/libijkffmpeg.so'
+//        pickFirst 'lib/armeabi/libijkffmpeg.so'
+//        pickFirst 'lib/armeabi-v7a/libijkffmpeg.so'
+//        pickFirst 'lib/x86/libijkffmpeg.so'
+//        pickFirst 'lib/arm64-v8a/libijksdl.so'
+//        pickFirst 'lib/armeabi/libijksdl.so'
+//        pickFirst 'lib/armeabi-v7a/libijksdl.so'
+//        pickFirst 'lib/x86/libijksdl.so'
+//
+//        pickFirst '**/libc++_shared.so'
+//        doNotStrip "*/armeabi/libYTCommon.so"
+//        doNotStrip "*/armeabi-v7a/libYTCommon.so"
+//        doNotStrip "*/x86/libYTCommon.so"
+//        doNotStrip "*/arm64-v8a/libYTCommon.so"
+//
         exclude 'assets/*'
 
     }
@@ -137,7 +137,7 @@ dependencies {
     implementation 'com.mirkowu:BaseToolbar:0.0.7'
 
     //vr视频
-    implementation project(path: ':vrlib')
+//    implementation project(path: ':vrlib')
 
     // uPDATE
     implementation 'com.github.xuexiangjys:XUpdate:1.1.4'
@@ -155,10 +155,10 @@ dependencies {
 
     // 高德地图
 //    implementation 'com.amap.api:3dmap:latest.integration'
-//    implementation 'com.amap.api:3dmap:7.5.0'
-//    implementation 'com.amap.api:map2d:6.0.0'
-//    implementation 'com.amap.api:location:5.0.0'
-//    implementation 'com.amap.api:search:latest.integration'
+    implementation 'com.amap.api:3dmap:7.5.0'
+    implementation 'com.amap.api:map2d:6.0.0'
+    implementation 'com.amap.api:location:5.0.0'
+    implementation 'com.amap.api:search:latest.integration'
 
     // WEBSocket
     implementation "org.java-websocket:Java-WebSocket:1.4.0"
@@ -169,5 +169,8 @@ dependencies {
 
     // 由于我们使用到了gson解析，所以还需要依赖google的Gson
     implementation 'com.google.code.gson:gson:2.8.6'
+
+    implementation "com.github.zcolin:ZRecyclerView:latest.release"
+    implementation project(':libIjkPlayer')
 
 }

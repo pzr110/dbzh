@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="280dp"
+    android:layout_height="300dp"
     android:orientation="vertical">
 
 
@@ -9,6 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@mipmap/img_bottom_bg">
+
+
 
         <RelativeLayout
             android:id="@+id/rl_phone"
@@ -28,6 +30,7 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/rl_down"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/shape_black_10">
@@ -41,6 +44,11 @@
                 android:paddingVertical="12.5dp"
                 android:src="@mipmap/ic_down" />
         </RelativeLayout>
+
+        <com.zplayer.library.ZPlayer
+            android:id="@+id/view_super_player"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <RelativeLayout
             android:layout_width="match_parent"

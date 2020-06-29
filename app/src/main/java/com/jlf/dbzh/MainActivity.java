@@ -52,9 +52,9 @@ import com.jlf.dbzh.im.Util;
 import com.jlf.dbzh.model.ITRTCAudioCall;
 import com.jlf.dbzh.model.TRTCAudioCallImpl;
 import com.jlf.dbzh.model.TRTCAudioCallListener;
-import com.jlf.dbzh.ui.NewActivity;
 import com.jlf.dbzh.utils.net.Api;
 import com.jlf.dbzh.utils.net.BaseSubscriber;
+import com.zplayer.library.ZPlayer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +64,7 @@ import java.util.Map;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChangeListener {
     private static final int REQ_PERMISSION_CODE = 0x1000;
     private int mGrantedCount = 0;          // 权限个数计数，获取Android系统权限
     private MapView mMvMain;
@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
-            ToastUtils.showLong("Message" + message);
+//            ToastUtils.showLong("Message" + message);
             Log.e("Socaaaaaaaaaaaaaaaaa", "Message" + message);
 
             if (message != null) {
@@ -385,6 +385,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isCall = false;
     private ImageView mIvSelect;
 
+    private ZPlayer player;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -416,9 +418,67 @@ public class MainActivity extends AppCompatActivity {
         doRegisterReceiver();
 //        thread.start();
 
-
         initLister();
 
+        initPlayer();
+
+//        player.setTitle("直播")//设置视频的titleName
+//                .play("http://47.108.82.225:8080/cmcc/XZOCNBI3.flv?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiYWRtaW4iLCJhZG1pbl9pZCI6MSwidGltZSI6MTU5MzQxNzE4NywiZXhwaXJlIjpudWxsfQ.6xKp-FXccP5vvjMt8H5UCe0_fLE8cfHy1IQiPcW4h-4");//开始播放视频
+
+
+    }
+
+
+    private void initPlayer() {
+        Log.e("AAAAAAAAAAA", "AAAAAAAAAAAA");
+        player.setLive(true)//设置该地址是直播的地址
+                .setNetChangeListener(true)//设置监听手机网络的变化,这个参数是内部是否处理网络监听，和setOnNetChangeListener没有关系
+                .setOnNetChangeListener(this)//实现网络变化的回调
+                .setScaleType(ZPlayer.SCALETYPE_FITXY)//图片缩放方式
+                .setPlayerWH(0, player.getMeasuredHeight())//设置竖屏的时候屏幕的高度，如果不设置会切换后按照16:9的高度重置
+                .setAlwaysShowControl()  //设置则一直显示
+                //准备好视频回调
+                .onPrepared(() -> {
+                    //TODO 监听视频是否已经准备完成开始播放。（可以在这里处理视频封面的显示跟隐藏）
+                    ToastUtils.showShort("开始播放");
+                })
+                //播放完成回调
+                .onComplete(() -> {
+                    //TODO 监听视频是否已经播放完成了。（可以在这里处理视频播放完成进行的操作）
+                })
+                //视频信息回调
+                .onInfo((what, extra) -> {
+                    //TODO 监听视频的相关信息。
+                    Log.e("VIDEO", "onError--what--" + what + "--Extra --" + extra);
+                })
+                //播放出错回调
+                .onError((what, extra) -> {
+                    //TODO 监听视频播放失败的回调
+                    Log.e("VIDEO", "onError--what--" + what + "--Extra --" + extra);
+                });
+    }
+
+    /**
+     * 网络链接监听类
+     */
+    @Override
+    public void onWifi() {
+        Toast.makeText(this, "当前网络环境是WIFI", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onMobile() {
+        Toast.makeText(this, "当前网络环境是手机网络", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onDisConnect() {
+        Toast.makeText(this, "网络链接断开", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onNoAvailable() {
+        Toast.makeText(this, "无网络链接", Toast.LENGTH_SHORT).show();
     }
 
     private void initCall() {
@@ -454,9 +514,18 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                mLlBottom.setVisibility(View.VISIBLE);
                 OnlineBean.Data.UserList userList = mAdapter.getData().get(position);
                 mSolider_id = userList.getUser_id();
+                String flv_url = userList.getFlv_url();
+                String username = userList.getUsername();
+//                ToastUtils.showShort("直播开始");
+                mLlCallList.setVisibility(View.GONE);
+                mLlSoldierList.setVisibility(View.GONE);
+                player.setTitle(username)//设置视频的titleName
+                        .play(flv_url);//开始播放视频
+                Log.e("AAAAAAAAAAA", "BBBBBBBBBBBB");
+                mLlBottom.setVisibility(View.VISIBLE);
+
 
             }
         });
@@ -632,13 +701,18 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerSoldier = findViewById(R.id.recycler_soldier);
         mRecyclerCall = findViewById(R.id.recycler_call);
 
-
+        player = findViewById(R.id.view_super_player);
+        player.bringToFront();
         mLlBottom = findViewById(R.id.ll_bottom);
         mLlBottom.bringToFront();
         mLlBottom.setVisibility(View.GONE);
 
 
         mIvPhone = findViewById(R.id.iv_phone);
+
+        findViewById(R.id.rl_phone).bringToFront();
+
+        findViewById(R.id.rl_down).bringToFront();
 
 
         mTvDown = findViewById(R.id.tv_down);
@@ -647,6 +721,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (mLlBottom.getVisibility() == View.VISIBLE) {
                     mLlBottom.setVisibility(View.GONE);
+                    player.stop();
                 }
             }
         });
@@ -704,6 +779,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.rl_detail).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                ActivityUtils.startActivity(NewActivity.class);
+
                 if (mLlSoldierList.getVisibility() == View.GONE) {
                     mLlSoldierList.setVisibility(View.VISIBLE);
                     mLlCallList.setVisibility(View.GONE);

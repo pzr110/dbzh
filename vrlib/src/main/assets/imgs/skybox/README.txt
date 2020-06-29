@@ -1,1 +1,0 @@
-If you need support for skybox/cubic, please open an issue.
