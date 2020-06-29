@@ -18,13 +18,16 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amap.api.maps.AMap;
@@ -42,6 +45,7 @@ import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.BarUtils;
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.ToastUtils;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.gson.Gson;
 import com.jlf.dbzh.adapter.SoliderAdapter;
 import com.jlf.dbzh.bean.JoinBean;
@@ -51,7 +55,11 @@ import com.jlf.dbzh.bean.TokenBean;
 import com.jlf.dbzh.im.JWebSocketClient;
 import com.jlf.dbzh.im.JWebSocketClientService;
 import com.jlf.dbzh.im.Util;
+import com.jlf.dbzh.model.ITRTCAudioCall;
+import com.jlf.dbzh.model.TRTCAudioCallImpl;
+import com.jlf.dbzh.model.TRTCAudioCallListener;
 import com.jlf.dbzh.ui.BaseActivity;
+import com.jlf.dbzh.ui.NewActivity;
 import com.jlf.dbzh.utils.L;
 import com.jlf.dbzh.utils.net.Api;
 import com.jlf.dbzh.utils.net.BaseSubscriber;
@@ -59,6 +67,7 @@ import com.jlf.dbzh.utils.net.BaseSubscriber;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -76,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout mLlSoldierList;
     private RecyclerView mRecyclerSoldier;
     private RecyclerView mRecyclerCall;
+    private LinearLayout mLlBottom;
+    private ImageView mTvDown;
+    private ImageView mIvPhone;
 
 
     private List<OnlineBean.Data.UserList> mLists;
@@ -95,6 +107,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ChatMessageReceiver chatMessageReceiver;
 
+    private TextView mTvTest;
+
+
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -110,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
     private List<OnlineBean.Data.UserList> mUserList;
+    private String mSolider_id;
 
 
     private class ChatMessageReceiver extends BroadcastReceiver {
@@ -143,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                     data.setUserinfo(userInfo);
                     jsonBean.setData(data);
                     String json = new Gson().toJson(jsonBean);
-                    Log.e("Socaaaaaaaaaaaaaaaaa", "AAAAAAA"+mUser_id);
+                    Log.e("Socaaaaaaaaaaaaaaaaa", "AAAAAAA" + mUser_id);
 
                     jWebSClientService.sendMsg(json);
                 } else {
@@ -219,9 +235,9 @@ public class MainActivity extends AppCompatActivity {
             userList.setRole(role);
             userList.setFlv_url(flv_url);
 
-            if (mUserList.size()==0){
+            if (mUserList.size() == 0) {
                 mUserList.add(userList);
-            }else {
+            } else {
                 for (int i = 0; i < mUserList.size(); i++) {
                     Log.e("ListAAAAAAAAAA", "  joinjoin   joinjoin  " + mUserList.get(i).getUser_id());
                     if (mUserList.get(i).getUser_id() != null) {
@@ -232,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
 //
                 }
             }
-
 
 
             mAdapter.setNewData(mUserList);
@@ -257,6 +272,108 @@ public class MainActivity extends AppCompatActivity {
     }
     //////////////////Socket
 
+    //////////语音
+    private ITRTCAudioCall sCall;
+
+    private int mCallType;
+
+    private boolean checkOff = true;
+
+    /**
+     * 拨号的回调
+     */
+    private TRTCAudioCallListener mTRTCAudioCallListener = new TRTCAudioCallListener() {
+
+        @Override
+        public void onError(int code, String msg) {
+            ToastUtils.showShort("onError");
+            Log.e("Listener", "onError" + msg);
+        }
+
+        @Override
+        public void onInvited(String sponsor, List<String> userIdList, boolean isFromGroup, int callType) {
+            ToastUtils.showShort("被邀请通话回调。");
+            Log.e("Listener", "onInvited");
+
+            sCall.accept(); // 接听
+
+        }
+
+        @Override
+        public void onGroupCallInviteeListUpdate(List<String> userIdList) {
+            ToastUtils.showShort("群聊更新邀请列表回调。");
+            Log.e("Listener", "onGroupCallInviteeListUpdate" + userIdList.size());
+        }
+
+        @Override
+        public void onUserEnter(String userId) {
+            ToastUtils.showShort("用户进入通话回调。");
+            Log.e("Listener", "onUserEnter" + userId);
+
+
+        }
+
+        @Override
+        public void onUserLeave(String userId) {
+            ToastUtils.showShort("用户离开通话回调。");
+            Log.e("Listener", "onUserLeave" + userId);
+
+        }
+
+        @Override
+        public void onReject(String userId) {
+            ToastUtils.showShort("拒绝通话回调。");
+            Log.e("Listener", "onReject" + userId);
+
+        }
+
+        @Override
+        public void onNoResp(String userId) {
+            ToastUtils.showShort("对方无回应回调。");
+            Log.e("Listener", "onNoResp" + userId);
+
+
+        }
+
+        @Override
+        public void onLineBusy(String userId) {
+            Log.e("Listener", "onLineBusy" + userId);
+
+        }
+
+        @Override
+        public void onCallingCancel() {
+            Log.e("Listener", "onCallingCancel当前通话被取消回调。");
+
+        }
+
+        @Override
+        public void onCallingTimeout() {
+            Log.e("Listener", "onCallingTimeout 当前通话超时回调。");
+
+        }
+
+        @Override
+        public void onCallEnd() {
+            Log.e("Listener", "onCallEnd 通话结束回调。");
+
+        }
+
+        @Override
+        public void onUserAudioAvailable(String userId, boolean isVideoAvailable) {
+            Log.e("Listener", "onUserAudioAvailable 用户是否开启音频上行回调。 " + userId + isVideoAvailable);
+
+        }
+
+        @Override
+        public void onUserVoiceVolume(Map<String, Integer> volumeMap) {
+            Log.e("Listener", "onUserVoiceVolume 用户通话音量回调。" + volumeMap);
+
+        }
+    };
+
+    /////////// 语音
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -271,6 +388,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (checkPermission()) {
             initMap();
+            getVoiceToken();
         }
 
         initRecycler();
@@ -288,6 +406,49 @@ public class MainActivity extends AppCompatActivity {
         ////// Socket
 
 
+        initLister();
+
+    }
+
+    private void initCall() {
+        // 初始化
+        sCall = TRTCAudioCallImpl.sharedInstance(this);
+        sCall.init();
+        //2. 注册监听器
+        sCall.addListener(mTRTCAudioCallListener);
+        Log.e("EEEEEEEEEEEEEE", "mAppId-A-" + mAppId + "-A-mUser_id-A-" + mUser_id + "-A-mUserSig-A-" + mUserSig);
+
+        sCall.login(Integer.parseInt(mAppId), mUser_id, mUserSig,
+//        sCall.login(1400385140, "456", "eJyrVgrxCdYrSy1SslIy0jNQ0gHzM1NS80oy0zLBwiamZlDh4pTsxIKCzBQlK0MTAwNjC1MgBZFJrSjILEoFipuamhoZGEBFSzJzwWKWxsamJkbGxlBTMtOBprr4mFY5hSdbuhlZRLiYJFdleVeUuxf6*hf4h2b5e1ZmJeeYRvo6l5t5ZhTbKtUCAE0gMBg_",
+                new ITRTCAudioCall.ActionCallBack() {
+
+                    @Override
+                    public void onError(int code, String msg) {
+
+                    }
+
+                    @Override
+                    public void onSuccess() {
+                        ToastUtils.showShort("登录成功");
+                        Log.e("EEEEEEEEEEEEEE", "mAppId-A-" + mAppId + "-A-mUser_id-A-" + mUser_id + "-A-mUserSig-A-" + mUserSig);
+                        sCall.setMicMute(false);
+                        sCall.setHandsFree(false);
+                    }
+                });
+
+    }
+
+
+    private void initLister() {
+        mAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                mLlBottom.setVisibility(View.VISIBLE);
+                OnlineBean.Data.UserList userList = mAdapter.getData().get(position);
+                mSolider_id = userList.getUser_id();
+
+            }
+        });
     }
 
     /**
@@ -337,11 +498,22 @@ public class MainActivity extends AppCompatActivity {
             aMap = mMvMain.getMap();
 
             setLocation();
-
-            LatLng latLng = new LatLng(30.401477, 104.082009);
-            drawLatLng(latLng, "ASDD");
-
         }
+        //蓝点
+//        MyLocationStyle myLocationStyle;
+//        myLocationStyle = new MyLocationStyle();//初始化定位蓝点样式类
+//        myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE);//连续定位、且将视角移动到地图中心点，定位点依照设备方向旋转，并且会跟随设备移动。（1秒1次定位）如果不设置myLocationType，默认也会执行此种模式。
+//        myLocationStyle.interval(2000); //设置连续定位模式下的定位间隔，只在连续定位模式下生效，单次定位模式下不会生效。单位为毫秒。
+//        aMap.setMyLocationStyle(myLocationStyle);//设置定位蓝点的Style
+//        aMap.getUiSettings().setMyLocationButtonEnabled(true);//设置默认定位按钮是否显示，非必需设置。
+//        aMap.setMyLocationEnabled(true);// 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
+//        myLocationStyle.showMyLocation(true);
+//        aMap.setOnMyLocationChangeListener(new AMap.OnMyLocationChangeListener() {
+//            @Override
+//            public void onMyLocationChange(Location location) {
+//                Log.e("gps", location.getLatitude() + "--" + location.getLongitude());
+//            }
+//        });
     }
 
     private void setLocation() {
@@ -354,6 +526,12 @@ public class MainActivity extends AppCompatActivity {
         aMap.setMyLocationStyle(myLocationStyle);//设置定位蓝点的Style
         aMap.getUiSettings().setMyLocationButtonEnabled(true);//设置默认定位按钮是否显示，非必需设置。
         aMap.setMyLocationEnabled(true);// 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
+        aMap.setOnMyLocationChangeListener(new AMap.OnMyLocationChangeListener() {
+            @Override
+            public void onMyLocationChange(Location location) {
+                Log.e("dingwei", location.getLatitude() + "--" + location.getLongitude());
+            }
+        });
     }
 
 
@@ -375,11 +553,13 @@ public class MainActivity extends AppCompatActivity {
                 .alpha(1.0f)
                 //设置marker平贴地图效果
                 .setFlat(false);
-        aMap.addMarker(options);
+//        aMap.addMarker(options);
     }
 
 
     private void intViewId() {
+
+
         mMvMain = findViewById(R.id.mv_main);
 
         mRlTop = findViewById(R.id.rl_top);
@@ -401,11 +581,30 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerCall = findViewById(R.id.recycler_call);
 
 
+        mLlBottom = findViewById(R.id.ll_bottom);
+        mLlBottom.bringToFront();
+        mLlBottom.setVisibility(View.GONE);
+
+
+        mIvPhone = findViewById(R.id.iv_phone);
+
+
+        mTvDown = findViewById(R.id.tv_down);
+        mTvDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mLlBottom.getVisibility() == View.VISIBLE) {
+                    mLlBottom.setVisibility(View.GONE);
+                }
+            }
+        });
+
+
         findViewById(R.id.rl_call_all).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 ToastUtils.showLong("长按");
-
+                ActivityUtils.startActivity(NewActivity.class);
                 return true;
             }
         });
@@ -433,6 +632,24 @@ public class MainActivity extends AppCompatActivity {
                     mLlSoldierList.setVisibility(View.GONE);
                     mLlCallList.setVisibility(View.GONE);
                 }
+            }
+        });
+
+        findViewById(R.id.rl_phone).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (checkOff) {
+                    sCall.call(mSolider_id);
+                    mIvPhone.setImageResource(R.mipmap.ic_hang_up);
+                    checkOff = !checkOff;
+                } else {
+                    sCall.hangup();
+                    mIvPhone.setImageResource(R.mipmap.ic_phone);
+                    checkOff = !checkOff;
+                }
+
+
             }
         });
 
@@ -484,6 +701,8 @@ public class MainActivity extends AppCompatActivity {
                         mFlv_url = bean.getData().getFlv_url();
                         Log.e("VOICE", "U" + mUser_id + mAppId + mUserSig);
 
+                        initCall();
+
 //                        String appid = bean.getData().getAppid();
 //                        String nonce = bean.getData().getNonce();
 //                        String gslb = bean.getData().getGslb().get(0).toString();
@@ -501,6 +720,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean checkPermission() {
+
+        /**
+         * Manifest.permission.ACCESS_COARSE_LOCATION,
+         * 					Manifest.permission.ACCESS_FINE_LOCATION,
+         * 					Manifest.permission.WRITE_EXTERNAL_STORAGE,
+         * 					Manifest.permission.READ_EXTERNAL_STORAGE,
+         * 					Manifest.permission.READ_PHONE_STATE,
+         * 					BACK_LOCATION_PERMISSION
+         */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             List<String> permissions = new ArrayList<>();
             if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
@@ -517,6 +745,15 @@ public class MainActivity extends AppCompatActivity {
             }
             if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)) {
                 permissions.add(Manifest.permission.READ_PHONE_STATE);
+            }
+            if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)) {
+                permissions.add(Manifest.permission.CAMERA);
+            }
+            if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)) {
+                permissions.add(Manifest.permission.RECORD_AUDIO);
+            }
+            if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
             }
             if (permissions.size() != 0) {
                 ActivityCompat.requestPermissions(MainActivity.this,
@@ -537,8 +774,9 @@ public class MainActivity extends AppCompatActivity {
                 if (PackageManager.PERMISSION_GRANTED == ret) mGrantedCount++;
             }
             if (mGrantedCount == permissions.length) {
+                getVoiceToken();
                 //首次启动，权限都获取到，才能正常进入通话  初始化
-
+//                initCall(); //首次启动，权限都获取到，才能正常进入通话
             } else {
                 Toast.makeText(this, getString(R.string.rtc_permisson_error_tip), Toast.LENGTH_SHORT).show();
             }

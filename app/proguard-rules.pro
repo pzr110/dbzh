@@ -20,16 +20,16 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-#3D 地图 V5.0.0之后：
--keep   class com.amap.api.maps.**{*;}
--keep   class com.autonavi.**{*;}
--keep   class com.amap.api.trace.**{*;}
-
-#2D地图
--keep class com.amap.api.maps2d.**{*;}
--keep class com.amap.api.mapcore2d.**{*;}
-
-#定位
--keep class com.amap.api.location.**{*;}
--keep class com.amap.api.fence.**{*;}
--keep class com.autonavi.aps.amapapi.model.**{*;}
+##3D 地图 V5.0.0之后：
+#-keep   class com.amap.api.maps.**{*;}
+#-keep   class com.autonavi.**{*;}
+#-keep   class com.amap.api.trace.**{*;}
+#
+##2D地图
+#-keep class com.amap.api.maps2d.**{*;}
+#-keep class com.amap.api.mapcore2d.**{*;}
+#
+##定位
+#-keep class com.amap.api.location.**{*;}
+#-keep class com.amap.api.fence.**{*;}
+#-keep class com.autonavi.aps.amapapi.model.**{*;}

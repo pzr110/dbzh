@@ -19,6 +19,12 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -145,15 +151,23 @@ dependencies {
 
 
     // Tencent RTC
-    implementation 'com.tencent.liteav:LiteAVSDK_TRTC:7.3.9139'
+//    implementation 'com.tencent.liteav:LiteAVSDK_TRTC:7.3.9139'
 
     // 高德地图
-    implementation 'com.amap.api:3dmap:7.5.0'
-    implementation 'com.amap.api:map2d:6.0.0'
-    implementation 'com.amap.api:location:5.0.0'
-    implementation 'com.amap.api:search:latest.integration'
+//    implementation 'com.amap.api:3dmap:latest.integration'
+//    implementation 'com.amap.api:3dmap:7.5.0'
+//    implementation 'com.amap.api:map2d:6.0.0'
+//    implementation 'com.amap.api:location:5.0.0'
+//    implementation 'com.amap.api:search:latest.integration'
 
     // WEBSocket
     implementation "org.java-websocket:Java-WebSocket:1.4.0"
+
+    // Tencent RTC
+    implementation "com.tencent.liteav:LiteAVSDK_TRTC:7.3.9139"
+    implementation 'com.tencent.imsdk:imsdk:4.7.10'
+
+    // 由于我们使用到了gson解析，所以还需要依赖google的Gson
+    implementation 'com.google.code.gson:gson:2.8.6'
 
 }

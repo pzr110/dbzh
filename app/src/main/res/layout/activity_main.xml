@@ -7,6 +7,19 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:id="@+id/ll_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <include
+            android:id="@+id/included1"
+            layout="@layout/layout_bottom" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
         android:id="@+id/ll_soldier_list"
         android:layout_width="205dp"
         android:layout_height="wrap_content"
@@ -31,9 +44,9 @@
                 android:textSize="14sp" />
 
             <ImageView
-                android:layout_alignParentEnd="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
                 android:layout_gravity="center_vertical"
                 android:src="@mipmap/ic_delete" />
 
@@ -50,7 +63,6 @@
             android:id="@+id/recycler_soldier"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
 
 
     </LinearLayout>
