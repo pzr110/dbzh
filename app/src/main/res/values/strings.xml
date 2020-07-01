@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">dbzh</string>
+    <string name="app_name">应急指挥</string>
     <string name="str_login">欢迎登录</string>
     <string name="str_input_account">请输入账号</string>
     <string name="str_input_pass">请输入密码</string>

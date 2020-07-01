@@ -14,7 +14,7 @@ import java.util.List;
 
 public class CallAdapter extends BaseQuickAdapter<OnlineBean.Data.UserList, BaseViewHolder> {
 
-    private boolean isEdit;
+    private boolean isSelectAll;
 
     public CallAdapter(@Nullable List<OnlineBean.Data.UserList> data) {
         super(R.layout.item_call, data);
@@ -26,18 +26,18 @@ public class CallAdapter extends BaseQuickAdapter<OnlineBean.Data.UserList, Base
 
         ImageView mIvSelect = helper.getView(R.id.iv_select);
 
-//        if (isEdit) {
-//            mIvSelect.setImageResource(R.mipmap.ic_select);
-//            item.setSelect(true);
-//        } else {
-//            mIvSelect.setImageResource(R.drawable.shape_unselect_circle);
-//            item.setSelect(false);
-//        }
+        if (isSelectAll) {
+            mIvSelect.setImageResource(R.mipmap.ic_select);
+            item.setSelect(true);
+        } else {
+            mIvSelect.setImageResource(R.drawable.shape_unselect_circle);
+            item.setSelect(false);
+        }
     }
 
 
-    public void changeSelectImage(boolean isEdit) {
-        this.isEdit = isEdit;
+    public void changeSelectImage(boolean isSelectAll) {
+        this.isSelectAll = isSelectAll;
         notifyDataSetChanged();
     }
 }

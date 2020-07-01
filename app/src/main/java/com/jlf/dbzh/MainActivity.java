@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,6 +83,9 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
     private ImageView mTvDown;
     private ImageView mIvPhone;
     private TextView mTvCallAll;
+    private TextView mTvNum;
+    private ImageView mIvClose;
+    private ImageView mIvCloseAll;
 
 
     private boolean isEdit = false;
@@ -95,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
     private String mAppId;
     private String mUserSig;
     private String mFlv_url;
+    private TextView mTvSelectAll;
 
 
     /////////////// Socket
@@ -168,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void getJson(String message) {
         /**
          * {
@@ -204,19 +211,26 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
         OnlineBean onlineBean = new Gson().fromJson(message, OnlineBean.class);
 
         String type = onlineBean.getType();
-        Log.e("ListAAAAAAAAAA", "TypeASD" + type);
 
         if (onlineBean.getType().equals("online_users")) {
             mUserList = onlineBean.getData().getUserList();
 
-            for (int i = 0; i < mUserList.size(); i++) {
-                mUserList.get(i).setSelect(false);
+            if (mUserList.size() > 0) {
+                for (int i = 0; i < mUserList.size(); i++) {
+                    mUserList.get(i).setSelect(false);
+
+                    if (mUserList.get(i).getUser_id().equals("pc_web") || mUserList.get(i).getUser_id().equals(mUser_id)) {
+                        mUserList.remove(i);
+                    }
+                }
             }
+
 
             mAdapter.addData(mUserList);
 
             mCallAdapter.addData(mUserList);
-//            getData();
+
+            mTvNum.setText("在线：" + mUserList.size());
 
         } else if (onlineBean.getType().equals("join")) {
             OnlineBean.Data.UserInfo userinfo = onlineBean.getData().getUserinfo();
@@ -247,14 +261,27 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
                         if (!mUserList.get(i).getUser_id().equals(user_id)) {
                             mUserList.add(userList);
                         }
+                        if (mUserList.get(i).getUser_id().equals("pc_web") || mUserList.get(i).getUser_id().equals(mUser_id)) {
+                            mUserList.remove(i);
+                        }
                     }
 //
                 }
             }
 
+//            if (mUserList.size()>0){
+//                for (int i = 0; i < mUserList.size(); i++) {
+//                    mUserList.get(i).setSelect(false);
+//
+//                    if (mUserList.get(i).getUser_id().equals("pc_web")||mUserList.get(i).getUser_id().equals(mUser_id)) {
+//                        mUserList.remove(i);
+//                    }
+//                }
+//            }
 
             mAdapter.setNewData(mUserList);
             mCallAdapter.setNewData(mUserList);
+            mTvNum.setText("在线：" + mUserList.size());
 
         } else if (onlineBean.getType().equals("position")) {
             String user_id = onlineBean.getData().getUser_id();
@@ -263,15 +290,20 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
         } else if (onlineBean.getType().equals("leave")) {
             String user_id = onlineBean.getData().getUser_id();
 
-            for (int i = 0; i < mUserList.size(); i++) {
-                if (mUserList.get(i).getUser_id().equals(user_id)) {
-                    mUserList.remove(i);
+            if (mUserList.size() > 0) {
+                for (int i = 0; i < mUserList.size(); i++) {
+                    if (mUserList.get(i).getUser_id().equals(user_id)) {
+                        mUserList.remove(i);
+                    }
+//                if (mUserList.get(i).getUser_id().contains("pc_web")||mUserList.get(i).getUser_id().equals(mUser_id)) {
+//                    mUserList.remove(i);
+//                }
                 }
             }
-            Log.e("ListAAAAAAAAAA", "leave" + user_id + mUserList.size());
+
             mAdapter.setNewData(mUserList);
             mCallAdapter.setNewData(mUserList);
-
+            mTvNum.setText("在线：" + mUserList.size());
         }
 
     }
@@ -429,6 +461,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
     }
 
 
+    @SuppressLint("ResourceAsColor")
     private void initPlayer() {
         Log.e("AAAAAAAAAAA", "AAAAAAAAAAAA");
         player.setLive(true)//设置该地址是直播的地址
@@ -441,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
                 .onPrepared(() -> {
                     //TODO 监听视频是否已经准备完成开始播放。（可以在这里处理视频封面的显示跟隐藏）
                     ToastUtils.showShort("开始播放");
+                    findViewById(R.id.rl_player_center).getBackground().setAlpha(0);
                 })
                 //播放完成回调
                 .onComplete(() -> {
@@ -537,7 +571,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
                 if (!isCall) {
                     boolean select = mCallAdapter.getData().get(position).isSelect();
                     mIvSelect = view.findViewById(R.id.iv_select);
-                    ToastUtils.showShort("点击" + select);
+//                    ToastUtils.showShort("点击" + select);
 
                     if (!select) {
                         mIvSelect.setImageResource(R.mipmap.ic_select);
@@ -619,6 +653,10 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
             aMap = mMvMain.getMap();
 
             setLocation();
+
+            LatLng latLng = new LatLng(39.906901, 116.397972);
+
+            drawLatLng(latLng, "BJ");
         }
         //蓝点
 //        MyLocationStyle myLocationStyle;
@@ -677,6 +715,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
 //        aMap.addMarker(options);
     }
 
+    private boolean isSelectAll = true;
 
     private void intViewId() {
 
@@ -714,6 +753,29 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
 
         findViewById(R.id.rl_down).bringToFront();
 
+        mTvNum = findViewById(R.id.tv_num);
+
+
+        mTvSelectAll = findViewById(R.id.tv_select_all);
+
+        mTvSelectAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (isSelectAll) {
+                    mCallAdapter.changeSelectImage(true);
+                    isSelectAll = false;
+                } else {
+                    mCallAdapter.changeSelectImage(false);
+                    isSelectAll = true;
+                }
+
+
+//                mIvSelect.setImageResource(R.mipmap.ic_select);
+//                mCallAdapter.getData().get(position).setSelect(true);
+            }
+        });
+
 
         mTvDown = findViewById(R.id.tv_down);
         mTvDown.setOnClickListener(new View.OnClickListener() {
@@ -729,6 +791,17 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
 
         mIvPhoneAll = findViewById(R.id.iv_phone_all);
 
+        findViewById(R.id.rl_call_all).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isCall) {
+                    sCall.hangup();
+                    isCall = false;
+                    mIvPhoneAll.setImageResource(R.mipmap.img_call_all);
+                }
+            }
+        });
+
 
         findViewById(R.id.rl_call_all).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -738,6 +811,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
                 List<OnlineBean.Data.UserList> data = mCallAdapter.getData();
 
                 if (data.size() > 0) {
+
                     List<String> callList = new ArrayList();
                     for (int i = 0; i < data.size(); i++) {
                         String user_id = data.get(i).getUser_id();
@@ -749,13 +823,16 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
                         isCall = true;
                         mIvPhoneAll.setImageResource(R.mipmap.ic_hang_up);
                     } else {
-                        sCall.hangup();
-                        isCall = false;
-                        mIvPhoneAll.setImageResource(R.mipmap.img_call_all);
+//                        sCall.hangup();
+//                        isCall = false;
+//                        mIvPhoneAll.setImageResource(R.mipmap.img_call_all);
                     }
 
 
                 } else {
+                    sCall.hangup();
+                    isCall = false;
+                    mIvPhoneAll.setImageResource(R.mipmap.img_call_all);
                     ToastUtils.showShort("暂无设备在线");
                 }
 
@@ -779,7 +856,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
         findViewById(R.id.rl_detail).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                ActivityUtils.startActivity(NewActivity.class);
+//                ActivityUtils.startActivity(MapDemoActivity.class);
 
                 if (mLlSoldierList.getVisibility() == View.GONE) {
                     mLlSoldierList.setVisibility(View.VISIBLE);
@@ -848,10 +925,34 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
 
 
                 } else {
+                    sCall.hangup();
+                    isCall = false;
+                    mTvCallAll.setText("立即进入");
+                    mTvCallAll.setBackgroundResource(R.drawable.shape_green_2);
                     ToastUtils.showShort("暂无设备在线");
                 }
 
 
+            }
+        });
+
+        mIvClose = findViewById(R.id.iv_close);
+        mIvCloseAll = findViewById(R.id.iv_close_all);
+//        mIvClose.bringToFront();
+//        mIvCloseAll.bringToFront();
+
+        mIvClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mLlSoldierList.setVisibility(View.GONE);
+                mLlCallList.setVisibility(View.GONE);
+            }
+        });
+        mIvCloseAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mLlSoldierList.setVisibility(View.GONE);
+                mLlCallList.setVisibility(View.GONE);
             }
         });
     }
@@ -975,6 +1076,7 @@ public class MainActivity extends AppCompatActivity implements ZPlayer.OnNetChan
             }
             if (mGrantedCount == permissions.length) {
                 getVoiceToken();
+                initMap();
                 //首次启动，权限都获取到，才能正常进入通话  初始化
 //                initCall(); //首次启动，权限都获取到，才能正常进入通话
             } else {
